@@ -1,7 +1,7 @@
 jobs:
   - job: windows
     pool:
-      vmImage: 'windows-latest'
+      vmImage: windows-latest
     timeoutInMinutes: 360
     variables:
       NVIDIA_CUDA_DIR: $(Pipeline.Workspace)/.nvcuda
