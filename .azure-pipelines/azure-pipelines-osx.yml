@@ -1,0 +1,51 @@
+jobs:
+  - job: osx
+    pool:
+      vmImage: macOS-10.14
+    timeoutInMinutes: 360
+    strategy:
+      maxParallel: 8
+      matrix:
+        osx_python3.7:
+          CONFIG: python3.7
+          # EXCLUDE_JINJA: CUDA_STR
+        osx_python3.8:
+          CONFIG: python3.8
+          # EXCLUDE_JINJA: CUDA_STR
+        osx_python3.9:
+          CONFIG: python3.9
+          # EXCLUDE_JINJA: CUDA_STR
+
+    steps:
+      - script: |
+          echo "##vso[task.setvariable variable=NIGHTLY]true"
+        condition: eq(variables['Build.Reason'], 'Schedule')
+        displayName: Set dev trigger if scheduled
+
+      - script: |
+          echo "##vso[task.setvariable variable=UNSCHEDULED_MASTER]true"
+        condition: and(eq(variables['Build.SourceBranch'], 'refs/heads/master'), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
+        displayName: Set upload if running from unscheduled master
+
+      - script: |
+          CBA_FLAGS="-vvv"
+          if [ -n "$INCLUDE_JINJA" ]; then
+            CBA_FLAGS="$CBA_FLAGS --build-only-jinja $INCLUDE_JINJA"
+          fi
+          if [ -n "$EXCLUDE_JINJA" ]; then
+            CBA_FLAGS="$CBA_FLAGS --no-build-jinja $EXCLUDE_JINJA"
+          fi
+          if [ ! -z "$NIGHTLY" ]; then
+            CBA_FLAGS="$CBA_FLAGS --scheduled-only --upload omnia-dev --force"
+          elif [ ! -z "$UNSCHEDULED_MASTER" ]; then
+            CBA_FLAGS="$CBA_FLAGS --upload omnia-dev"
+          fi
+          export CBA_FLAGS=$CBA_FLAGS
+          echo "##vso[task.setvariable variable=CBA_FLAGS]$CBA_FLAGS"
+        displayName: Assemble Variables
+
+      - script: |
+          ./devtools/osx-build.sh
+        displayName: Run Conda Build
+        env:
+          BINSTAR_TOKEN: $(BINSTAR_TOKEN)
