@@ -181,7 +181,7 @@ jobs:
           conda config --add channels conda-forge
         displayName: Add Conda-forge to the conda channels
 
-       The condition here for the NVIDIA steps only should trigger if CUDA_VER is set
+       # The condition here for the NVIDIA steps only should trigger if CUDA_VER is set
        - task: Cache@2
          inputs:
            key: 'CUDA | "$(CUDA_VER)" | Network'
